@@ -17,14 +17,14 @@ class ProcessShell:
         """"""
         pass
 
-    def shell_command(self, *args, shell=False):
+    def shell_command(self, *args, **kwargs):
         """
         执行命令
         :param args:
-        :param shell:
+        :param kwargs:
         :return:
         """
-        process = subprocess.Popen(args, shell=shell, stdout=PIPE, stdin=PIPE, stderr=PIPE)
+        process = subprocess.Popen(args, shell=kwargs.get("shell", False), stdout=PIPE, stdin=PIPE, stderr=PIPE)
         if not process:
             return None
         if not process.stdout:

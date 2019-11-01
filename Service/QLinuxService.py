@@ -5,13 +5,12 @@
 """
 
 SQL_TABEL = """CREATE TABLE `profiler` (
-  `id` INT NOT NULL AUTO_INCREMENT,
   `timestamp` INT NOT NULL,
   `process_name` VARCHAR(255) NOT NULL,
   `cpu` FLOAT NULL DEFAULT 0,
   `mem` FLOAT NULL DEFAULT 0,
   `network` INT NULL DEFAULT 0,
-  PRIMARY KEY (`id`));
+  PRIMARY KEY (`timestamp`));
 """
 
 import os
