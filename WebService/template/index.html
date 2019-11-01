@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- End Required meta tags -->
+    <!-- Begin SEO tag -->
+    <title> 进程监控页面 </title>
+    <link href="css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="css/bootstrap-responsive.min.css" rel="stylesheet"/>
+    <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/highcharts.js"></script>
+    <script type="text/javascript" src="js/mini.dialog.js"></script>
+    <script type="text/javascript">
+      function OnSelectChange()
+      {
+        var value = $("#select_app_list").val();
+        $.ajax({
+          type:"GET",
+          url:"/process_data?process="+value,
+          success:function(response)
+          {
+            var result = $.parseJSON(response);
+            $("#chart_canvas").highcharts({
+
+            });
+          }
+        })
+      }
+      $(document).ready(function(){
+        OnSelectChange();
+      })
+    </script>
+  </head>
+  <body>
+    <div>
+      <div>
+        <select id="select_app_list" onchange="OnSelectChange()">
+          <option value="gameapp">gameapp</option>
+          <option value="gameapp1">gameapp1</option>
+          <option value="gameapp2">gameapp2</option>
+        </select>
+      </div>
+      <div id="chart_canvas"></div>
+    </div>
+  </body>
+</html>
