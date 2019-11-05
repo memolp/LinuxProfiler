@@ -4,7 +4,7 @@
   放到服务器上的监控服务，需要使用Py2.7支持
 """
 
-SQL_TABEL = """CREATE TABLE `profiler` (
+SQL_TABEL = """CREATE TABLE IF NOT EXISTS `{0}` (
   `timestamp` INT NOT NULL,
   `process_name` VARCHAR(255) NOT NULL,
   `cpu` FLOAT NULL DEFAULT 0,
@@ -13,13 +13,13 @@ SQL_TABEL = """CREATE TABLE `profiler` (
   PRIMARY KEY (`timestamp`));
 """
 
+import re
 import os
 import time
 import json
-import argparse
+import db
 
 from shell.LinuxShell import LinuxShell
-from db.SQLiteMgr import SQLiteMgr
 
 class Service:
     """监控服务"""
@@ -47,6 +47,7 @@ class Service:
 
         return True
 
+
     def RunService(self):
         """
         启动服务
@@ -58,12 +59,11 @@ class Service:
 
         dbObject = None
         if self.mConfig['dbType'] == "sqlite":
-            dbObject = SQLiteMgr(self.mConfig['dbname'])
-            if not os.path.exists(self.mConfig['dbname']):
-                dbObject.execute(SQL_TABEL)
+            dbObject = db.CreateSQLiteObject(self.mConfig['dbname'])
         else:
-            #dbObject = MySQLMgr()
-            pass
+            dbObject = db.CreateMysqlDBObject(self.mConfig['dbhost'], self.mConfig['dbuser'],
+                                              self.mConfig['dbpasswd'], self.mConfig['dbname'],
+                                              self.mConfig['dbport'])
 
         if dbObject is None:
             print("DB not create sucess!!")
@@ -76,18 +76,24 @@ class Service:
             if pid <= 0:
                 print("GetProcessID Error: process:{0} user:{1}".format(processName, user))
             else:
-                pids.append((processName, pid))
+                table_name = "{0}_{1}".format(processName, user)
+                pids.append((processName, pid, user, table_name))
+                dbObject.execute(SQL_TABEL.format(table_name))
+
         if len(pids) <= 0:
             print("No Process!!!!")
             return
 
         while True:
             time_stamp = int(time.time())
-            for processName, pid in pids:
+            for processName, pid, user, table_name in pids:
                 cpu = self.mShell.GetProcessCpu(pid)
                 mem = self.mShell.GetProcessMem(pid)
-                sql_cmd = "insert into profiler (timestamp,process_name,cpu,mem,network) values(?,?,?,?,?)"
-                dbObject.execute(sql_cmd, (time_stamp, processName, cpu, mem, 0))
+                if self.mConfig['dbType'] == "sqlite":
+                    sql_cmd = "insert into {0} (timestamp,process_name,cpu,mem,network) values(?,?,?,?,?)"
+                else:
+                    sql_cmd = "insert into {0} (timestamp,process_name,cpu,mem,network) values(%s,%s,%s,%s,%s)"
+                dbObject.execute(sql_cmd.format(table_name), (time_stamp, processName, round(cpu, 2), round(mem, 2), 0))
                 dbObject.commit()
                 time.sleep(self.mConfig['delay'])
 
